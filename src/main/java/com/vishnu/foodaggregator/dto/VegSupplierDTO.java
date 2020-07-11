@@ -9,7 +9,9 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class VegSupplierDTO extends SupplierDTO {
+public class VegSupplierDTO {
     private String productId;
     private String productName;
+    private Integer quantity;
+    private String price;
 }
