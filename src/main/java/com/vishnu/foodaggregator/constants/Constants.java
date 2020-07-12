@@ -3,8 +3,8 @@ package com.vishnu.foodaggregator.constants;
 public final class Constants {
 
     // Exception Messages
-    public static final String ITEM_NOT_FOUND_MESSAGE = "Item : \'%s\' is not found";
-
+    public static final String ITEM_NOT_FOUND_MESSAGE = "Item : '%s' is not found";
+    public static final String ITEM_NOT_FOUND_FOR_QTY_MESSAGE = "Item : '%s' is not found for quantity %d";
 
     // Supplier URLs
     public static final String SUPPLIER_FRUIT_URL = "supplier.fruit.url";

@@ -11,6 +11,8 @@ import java.util.List;
 public interface AggregatorService {
     ItemResponse getByName(String itemName) throws ItemNotFoundException;
 
+    ItemResponse getByNameQuantity(String itemName, Integer quantity) throws ItemNotFoundException;
+
     List<ItemResponse> getAllItemsSync();
 
     List<FruitSupplierDTO> getFruitItems();

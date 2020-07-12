@@ -36,6 +36,21 @@ public class AggregatorServiceImpl implements AggregatorService {
                 .orElseThrow(() -> new ItemNotFoundException(String.format(ITEM_NOT_FOUND_MESSAGE, itemName)));
     }
 
+    public ItemResponse getByNameQuantity(String itemName, Integer quantity) throws ItemNotFoundException {
+        List<ItemResponse> itemResponseList = getAllItemsSync();
+
+        return itemResponseList.stream()
+                .filter(item -> itemName.toLowerCase().equals(item.getName().toLowerCase())
+                        && quantity <= item.getQuantity())
+                .findFirst()
+                .map(item -> {
+                    item.setQuantity(quantity);
+                    return item;
+                })
+                .orElseThrow(() ->
+                        new ItemNotFoundException(String.format(ITEM_NOT_FOUND_FOR_QTY_MESSAGE, itemName, quantity)));
+    }
+
     @Override
     public List<ItemResponse> getAllItemsSync() {
         List<ItemResponse> fruitItems = getFruitItems().stream().map(this::mapSupplierDTOToItemResponse).collect(Collectors.toList());
