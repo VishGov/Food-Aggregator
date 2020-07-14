@@ -15,8 +15,7 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
-import static com.vishnu.foodaggregator.constants.Constants.METHOD_LOGGING_LOGGER_PATTERN;
-import static com.vishnu.foodaggregator.constants.Constants.REQUEST_ID;
+import static com.vishnu.foodaggregator.constants.Constants.*;
 
 @Aspect
 @Component
@@ -35,11 +34,6 @@ public class LoggingAspect {
     public void restAdapterMethods() {
     }
 
-    @Before("controllerMethods()")
-    public void addRequestIdBeforeControllerCall() {
-        MDC.put(REQUEST_ID, UUID.randomUUID().toString());
-    }
-
     @Around("controllerMethods() || serviceMethods() || restAdapterMethods()")
     public Object logMethod(ProceedingJoinPoint proceedingJoinPoint) throws Throwable {
         MethodSignature methodSignature = (MethodSignature) proceedingJoinPoint.getSignature();
@@ -48,18 +42,15 @@ public class LoggingAspect {
         String methodName = methodSignature.getName();
         String[] parameterNames = methodSignature.getParameterNames();
         Object[] args = proceedingJoinPoint.getArgs();
+        String paramList = parameterNames.length == 0 ? "" : populateParamList(parameterNames, args);
+        log.info(METHOD_LOGGING_LOGGER_PATTERN_ENTRY,className, methodName, paramList);
 
         StopWatch stopWatch = new StopWatch();
         stopWatch.start();
         Object result = proceedingJoinPoint.proceed();
         stopWatch.stop();
 
-        String paramList = parameterNames.length == 0 ? "" : populateParamList(parameterNames, args);
-        String logString = String.format(METHOD_LOGGING_LOGGER_PATTERN,
-                MDC.get(REQUEST_ID), className, methodName, paramList, stopWatch.getTotalTimeMillis());
-        log.info(logString);
-        MDC.clear();
-
+        log.info(METHOD_LOGGING_LOGGER_PATTERN,className, methodName, result, stopWatch.getTotalTimeMillis());
         return result;
     }
 

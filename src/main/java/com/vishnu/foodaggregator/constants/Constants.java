@@ -18,6 +18,7 @@ public final class Constants {
 
     // LoggingAspect
     public static final String REQUEST_ID = "REQUEST_ID";
-    public static final String METHOD_LOGGING_LOGGER_PATTERN = "SESSION_ID = %s %s#%s : PARAMS = {%s} ; TIME = %d";
+    public static final String METHOD_LOGGING_LOGGER_PATTERN_ENTRY = "{}#{} : PARAMS = {{}}";
+    public static final String METHOD_LOGGING_LOGGER_PATTERN = "{}#{} : RESULT = {{}} ; TIME = {}";
 
 }
