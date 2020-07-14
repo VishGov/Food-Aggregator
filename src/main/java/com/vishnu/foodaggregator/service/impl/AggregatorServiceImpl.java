@@ -120,6 +120,11 @@ public class AggregatorServiceImpl implements AggregatorService {
 
     }
 
+    @Override
+    public Map<String, List<ItemResponse>> getSummary() {
+        return itemsCache.getItemsMap();
+    }
+
     private List<ItemResponse> getItemsFromGrainSupplier() {
         return supplierService.getGrainItems()
                 .stream()

@@ -19,4 +19,6 @@ public interface AggregatorService {
     List<ItemResponse> getAllItemsSync();
 
     List<ItemResponse> getAllItemsAsync();
+
+    Map<String, List<ItemResponse>> getSummary();
 }
