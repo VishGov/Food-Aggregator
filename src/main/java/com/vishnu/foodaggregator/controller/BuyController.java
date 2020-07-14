@@ -5,7 +5,6 @@ import com.vishnu.foodaggregator.exception.InvalidItemRequestException;
 import com.vishnu.foodaggregator.exception.ItemNotFoundException;
 import com.vishnu.foodaggregator.response.ItemResponse;
 import com.vishnu.foodaggregator.service.AggregatorService;
-import org.slf4j.MDC;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -14,7 +13,6 @@ import java.math.BigDecimal;
 import java.text.NumberFormat;
 import java.text.ParseException;
 import java.util.Locale;
-import java.util.UUID;
 
 import static com.vishnu.foodaggregator.constants.Constants.*;
 import static com.vishnu.foodaggregator.constants.Mappings.*;
@@ -31,8 +29,12 @@ public class BuyController {
 
     @GetMapping(value = BUY_ITEM)
     public ResponseEntity<ItemResponse> buyItem(@PathVariable String itemName) throws ItemNotFoundException {
-        MDC.put("REQUEST_ID", UUID.randomUUID().toString());
         return new ResponseEntity<>(aggregatorService.getByName(itemName, false), HttpStatus.OK);
+    }
+
+    @GetMapping(value = FAST_BUY_ITEM)
+    public ResponseEntity<ItemResponse> fastBuyItem(@PathVariable String itemName) throws ItemNotFoundException {
+        return new ResponseEntity<>(aggregatorService.getByName(itemName, true), HttpStatus.OK);
     }
 
     @GetMapping(value = BUY_ITEM_QTY)
