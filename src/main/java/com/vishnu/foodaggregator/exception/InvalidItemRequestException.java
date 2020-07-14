@@ -1,6 +1,6 @@
 package com.vishnu.foodaggregator.exception;
 
-public class InvalidItemRequestException extends Exception {
+public class InvalidItemRequestException extends RuntimeException {
 
     public InvalidItemRequestException(String message) {
         super(message);
