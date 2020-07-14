@@ -12,7 +12,9 @@ import org.springframework.web.bind.annotation.*;
 import java.math.BigDecimal;
 import java.text.NumberFormat;
 import java.text.ParseException;
+import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 
 import static com.vishnu.foodaggregator.constants.Constants.*;
 import static com.vishnu.foodaggregator.constants.Mappings.*;
@@ -57,6 +59,12 @@ public class BuyController {
 
         return new ResponseEntity<>(aggregatorService.getByNameQuantityPrice(itemName, quantity, price), HttpStatus.OK);
     }
+
+    @GetMapping(value = SHOW_SUMMARY)
+    public ResponseEntity<Map<String, List<ItemResponse>>> showSummary() {
+        return new ResponseEntity<>(aggregatorService.getSummary(), HttpStatus.OK);
+    }
+
 
     private void isValidPrice(String price) throws InvalidItemRequestException {
         try {
