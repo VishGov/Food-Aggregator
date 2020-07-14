@@ -13,4 +13,8 @@ public final class Constants {
     public static final String SUPPLIER_FRUIT_URL = "supplier.fruit.url";
     public static final String SUPPLIER_VEGETABLE_URL = "supplier.vegetable.url";
     public static final String SUPPLIER_GRAIN_URL = "supplier.grain.url";
+
+    // LoggingAspect
+    public static final String REQUEST_ID = "REQUEST_ID";
+    public static final String METHOD_LOGGING_LOGGER_PATTERN = "SESSION_ID = %s %s#%s : PARAMS = {%s} ; TIME = %d";
 }
