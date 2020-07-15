@@ -22,25 +22,25 @@ import static com.vishnu.foodaggregator.constants.Mappings.*;
 @RestController
 public class BuyController {
 
-    private AggregatorService aggregatorService;
+    private final AggregatorService aggregatorService;
 
     public BuyController(AggregatorService aggregatorService) {
         this.aggregatorService = aggregatorService;
     }
 
     @GetMapping(value = BUY_ITEM)
-    public ResponseEntity<ItemResponse> buyItem(@PathVariable String itemName) throws ItemNotFoundException {
+    public ResponseEntity<List<ItemResponse>> buyItem(@PathVariable String itemName) throws ItemNotFoundException {
         return new ResponseEntity<>(aggregatorService.getByName(itemName, false), HttpStatus.OK);
     }
 
     @GetMapping(value = FAST_BUY_ITEM)
-    public ResponseEntity<ItemResponse> fastBuyItem(@PathVariable String itemName) throws ItemNotFoundException {
+    public ResponseEntity<List<ItemResponse>> fastBuyItem(@PathVariable String itemName) throws ItemNotFoundException {
         return new ResponseEntity<>(aggregatorService.getByName(itemName, true), HttpStatus.OK);
     }
 
     @GetMapping(value = BUY_ITEM_QTY)
-    public ResponseEntity<ItemResponse> buyItemWithQuantity(@PathVariable String itemName,
-                                                            @RequestParam(required = true) Integer quantity) throws ItemNotFoundException, InvalidItemRequestException {
+    public ResponseEntity<List<ItemResponse>> buyItemWithQuantity(@PathVariable String itemName,
+                                                                  @RequestParam Integer quantity) throws ItemNotFoundException, InvalidItemRequestException {
 
         Validator.createValidator()
                 .addValidation(new PropertySetValidation("quantity", quantity))
@@ -51,9 +51,9 @@ public class BuyController {
     }
 
     @GetMapping(value = BUY_ITEM_QTY_PRICE)
-    public ResponseEntity<ItemResponse> buyItemWithQuantityAndPrice(@PathVariable String itemName,
-                                                                    @RequestParam(required = true) Integer quantity,
-                                                                    @RequestParam(required = true) String price) throws ItemNotFoundException, InvalidItemRequestException {
+    public ResponseEntity<List<ItemResponse>> buyItemWithQuantityAndPrice(@PathVariable String itemName,
+                                                                          @RequestParam Integer quantity,
+                                                                          @RequestParam String price) throws ItemNotFoundException, InvalidItemRequestException {
         Validator.createValidator()
                 .addValidation(new PropertySetValidation("quantity", quantity))
                 .addValidation(new QuantityValidation(quantity))

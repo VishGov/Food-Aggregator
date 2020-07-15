@@ -1,6 +1,7 @@
 package com.vishnu.foodaggregator.util;
 
 import com.vishnu.foodaggregator.response.ItemResponse;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
@@ -10,8 +11,9 @@ import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 
 @Component
+@Slf4j
 public class ItemsCache {
-    private Map<String, List<ItemResponse>> itemsMap;
+    private final Map<String, List<ItemResponse>> itemsMap;
 
     public ItemsCache() {
         this.itemsMap = new ConcurrentHashMap<>();
@@ -21,17 +23,17 @@ public class ItemsCache {
         return Optional.ofNullable(itemsMap.get(itemName));
     }
 
-    public void putItem(String itemName, ItemResponse itemResponse) {
+    public void putItem(String itemName, ItemResponse itemResponse, boolean deductQuantity) {
+        log.info("Putting item in cache. ITEM_NAME = {} , ITEM_RESPONSE = {}", itemName, itemResponse);
+
         List<ItemResponse> cachedItemResponses = itemsMap.computeIfAbsent(itemName, v -> new ArrayList<>());
         boolean cacheListModified = false;
         for (int i = 0; i < cachedItemResponses.size(); i++) {
             ItemResponse cachedItemResponse = cachedItemResponses.get(i);
             if (cachedItemResponse.equals(itemResponse)) {
-                if (itemResponse.getQuantity() <= cachedItemResponse.getQuantity())
-                    cachedItemResponse.setQuantity(cachedItemResponse.getQuantity() - itemResponse.getQuantity());
-                else
-                    cachedItemResponse = itemResponse;
-
+                int itemResponseQuantity = deductQuantity ? -(itemResponse.getQuantity()) : itemResponse.getQuantity();
+                cachedItemResponse.setQuantity(cachedItemResponse.getQuantity() + itemResponseQuantity);
+                cachedItemResponse.setPrice(itemResponse.getPrice());
                 cachedItemResponses.set(i, cachedItemResponse);
                 cacheListModified = true;
                 break;
@@ -49,11 +51,16 @@ public class ItemsCache {
             itemsMap.remove(itemName);
     }
 
-    public void updateCache(List<ItemResponse> itemResponseList) {
-        itemResponseList.stream().forEach(itemResponse -> putItem(itemResponse.getName().toLowerCase(), itemResponse));
+    public void updateCache(List<ItemResponse> itemResponseList, boolean deductQuantity) {
+        log.info("Items received for cache update, ITEMS = {} , DEDUCT_QUANTITY = {}", itemResponseList, deductQuantity);
+        itemResponseList.forEach(itemResponse -> putItem(itemResponse.getName().toLowerCase(), itemResponse, deductQuantity));
     }
 
     public Map<String, List<ItemResponse>> getItemsMap() {
         return itemsMap;
+    }
+
+    public Integer size() {
+        return itemsMap.size();
     }
 }

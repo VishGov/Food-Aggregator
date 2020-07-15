@@ -4,18 +4,16 @@ import lombok.extern.slf4j.Slf4j;
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.annotation.Around;
 import org.aspectj.lang.annotation.Aspect;
-import org.aspectj.lang.annotation.Before;
 import org.aspectj.lang.annotation.Pointcut;
 import org.aspectj.lang.reflect.MethodSignature;
-import org.slf4j.MDC;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StopWatch;
 
-import java.util.UUID;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
-import static com.vishnu.foodaggregator.constants.Constants.*;
+import static com.vishnu.foodaggregator.constants.Constants.METHOD_LOGGING_LOGGER_PATTERN;
+import static com.vishnu.foodaggregator.constants.Constants.METHOD_LOGGING_LOGGER_PATTERN_ENTRY;
 
 @Aspect
 @Component
@@ -43,14 +41,14 @@ public class LoggingAspect {
         String[] parameterNames = methodSignature.getParameterNames();
         Object[] args = proceedingJoinPoint.getArgs();
         String paramList = parameterNames.length == 0 ? "" : populateParamList(parameterNames, args);
-        log.info(METHOD_LOGGING_LOGGER_PATTERN_ENTRY,className, methodName, paramList);
+        log.info(METHOD_LOGGING_LOGGER_PATTERN_ENTRY, className, methodName, paramList);
 
         StopWatch stopWatch = new StopWatch();
         stopWatch.start();
         Object result = proceedingJoinPoint.proceed();
         stopWatch.stop();
 
-        log.info(METHOD_LOGGING_LOGGER_PATTERN,className, methodName, result, stopWatch.getTotalTimeMillis());
+        log.info(METHOD_LOGGING_LOGGER_PATTERN, className, methodName, result, stopWatch.getTotalTimeMillis());
         return result;
     }
 

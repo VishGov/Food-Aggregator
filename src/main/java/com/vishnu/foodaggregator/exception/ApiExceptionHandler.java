@@ -1,5 +1,6 @@
 package com.vishnu.foodaggregator.exception;
 
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -16,6 +17,7 @@ import static org.springframework.http.HttpStatus.BAD_REQUEST;
 import static org.springframework.http.HttpStatus.NOT_FOUND;
 
 @ControllerAdvice
+@Slf4j
 public class ApiExceptionHandler extends ResponseEntityExceptionHandler {
 
     @ExceptionHandler(ItemNotFoundException.class)
@@ -26,6 +28,7 @@ public class ApiExceptionHandler extends ResponseEntityExceptionHandler {
                 .httpStatus(NOT_FOUND)
                 .build();
 
+        log.error("ERROR = {} ; EXCEPTION = {}", e.getLocalizedMessage(), e);
         return new ResponseEntity<>(apiException, NOT_FOUND);
     }
 
@@ -37,6 +40,7 @@ public class ApiExceptionHandler extends ResponseEntityExceptionHandler {
                 .httpStatus(BAD_REQUEST)
                 .build();
 
+        log.error("ERROR = {} ; EXCEPTION = {}", e.getLocalizedMessage(), e);
         return new ResponseEntity<>(apiException, BAD_REQUEST);
     }
 
@@ -48,6 +52,7 @@ public class ApiExceptionHandler extends ResponseEntityExceptionHandler {
                 .httpStatus(BAD_REQUEST)
                 .build();
 
+        log.error("ERROR = {} ; EXCEPTION = {}", ex.getLocalizedMessage(), ex);
         return new ResponseEntity<>(apiException, BAD_REQUEST);
     }
 

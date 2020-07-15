@@ -10,7 +10,6 @@ import com.vishnu.foodaggregator.service.SupplierService;
 import com.vishnu.foodaggregator.util.ItemsCache;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.slf4j.MDC;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
@@ -32,83 +31,93 @@ public class AggregatorServiceImpl implements AggregatorService {
     private SupplierService supplierService;
 
     @Override
-    public ItemResponse getByName(String itemName, boolean makeAsyncCall) throws ItemNotFoundException {
+    public List<ItemResponse> getByName(String itemName, boolean makeAsyncCall) throws ItemNotFoundException {
         List<ItemResponse> itemResponseList = makeAsyncCall ? getAllItemsAsync() : getAllItemsSync();
 
-        return itemResponseList.stream()
+        log.info("Filtering items by name");
+        List<ItemResponse> filteredItemResponses = itemResponseList.stream()
                 .filter(item -> itemName.toLowerCase().equals(item.getName().toLowerCase()))
-                .findFirst()
-                .orElseThrow(() -> new ItemNotFoundException(String.format(ITEM_NOT_FOUND_MESSAGE, itemName)));
+                .collect(Collectors.toList());
+
+        if (filteredItemResponses.isEmpty())
+            throw new ItemNotFoundException(String.format(ITEM_NOT_FOUND_MESSAGE, itemName));
+
+        log.info("Item : '{}' available. ItemResponse = {}", itemName, filteredItemResponses);
+        return filteredItemResponses;
     }
 
     @Override
-    public ItemResponse getByNameQuantity(String itemName, Integer quantity) throws ItemNotFoundException {
+    public List<ItemResponse> getByNameQuantity(String itemName, Integer quantity) throws ItemNotFoundException {
         List<ItemResponse> itemResponseList = getAllItemsSync();
 
-        return itemResponseList.stream()
+        log.info("Filtering items by name and quantity");
+        List<ItemResponse> filteredItemResponses = itemResponseList.stream()
                 .filter(item -> itemName.toLowerCase().equals(item.getName().toLowerCase()))
                 .filter(item -> quantity <= item.getQuantity())
-                .findFirst()
                 .map(item -> {
+                    item = item.toBuilder().build();
                     item.setQuantity(quantity);
                     return item;
                 })
-                .orElseThrow(() -> {
-                            //todo improve logging!
-                            log.info("ITEM NOT FOUND!");
-                            return new ItemNotFoundException(String.format(ITEM_NOT_FOUND_FOR_QTY_MESSAGE, itemName, quantity));
-                        }
-                );
+                .collect(Collectors.toList());
+
+        if (filteredItemResponses.isEmpty())
+            throw new ItemNotFoundException(String.format(ITEM_NOT_FOUND_FOR_QTY_MESSAGE, itemName, quantity));
+
+        log.info("Item : '{}' available. ItemResponse = {}", itemName, filteredItemResponses);
+        return filteredItemResponses;
     }
 
     @Override
-    public ItemResponse getByNameQuantityPrice(String itemName, Integer quantity, String price) throws ItemNotFoundException {
+    public List<ItemResponse> getByNameQuantityPrice(String itemName, Integer quantity, String price) throws ItemNotFoundException {
 
-        Optional<List<ItemResponse>> itemResponseList = itemsCache.getItemResponses(itemName)
+        Optional<List<ItemResponse>> itemResponsesFromCacheOrSuppliers = itemsCache.getItemResponses(itemName)
+                .map(cachedItemResponses -> {
+                    log.info("Item : '{}' is present in cache. Corresponding item responses : ITEM_RESPONSES = {}",itemName, cachedItemResponses);
+                    return cachedItemResponses;
+                })
                 .or(() -> checkWithSuppliers(itemName));
 
-        return itemResponseList.stream()
+        List<ItemResponse> filteredItemResponses = itemResponsesFromCacheOrSuppliers.stream()
                 .flatMap(Collection::stream)
+                .map(item -> item.toBuilder().build())
                 .filter(item -> quantity <= item.getQuantity())
                 .filter(item -> checkPrice(item.getPrice(), price))
-                .findFirst()
-                .map(item -> item.toBuilder().build())
-                .map(item -> {
-                    item.setQuantity(quantity);
-                    itemsCache.putItem(itemName, item);
-                    return item;
-                })
-                .orElseThrow(() ->
-                        new ItemNotFoundException(String.format(ITEM_NOT_FOUND_FOR_QTY_PRICE_MESSAGE, itemName, quantity, price)));
+                .peek(item -> item.setQuantity(quantity)).collect(Collectors.toList());
+
+
+        itemsCache.updateCache(filteredItemResponses, true);
+
+        if (filteredItemResponses.isEmpty())
+            throw new ItemNotFoundException(String.format(ITEM_NOT_FOUND_FOR_QTY_PRICE_MESSAGE, itemName, quantity, price));
+
+        log.info("Item : '{}' available. ItemResponse = {}", itemName, filteredItemResponses);
+        return filteredItemResponses;
     }
 
     @Override
     public List<ItemResponse> getAllItemsSync() {
+        log.info("Calling suppliers to get items synchronously");
         List<ItemResponse> vegItems = getItemsFromVegSupplier();
         List<ItemResponse> fruitItems = getItemsFromFruitSupplier();
         List<ItemResponse> grainItems = getItemsFromGrainSupplier();
 
-        return Stream.of(fruitItems, vegItems, grainItems).flatMap(Collection::stream).collect(Collectors.toList());
+        List<ItemResponse> aggregatedItems = Stream.of(fruitItems, vegItems, grainItems).flatMap(Collection::stream).collect(Collectors.toList());
+        log.info("Aggregated items from sync call to suppliers. Result = {}", aggregatedItems);
+
+        return aggregatedItems;
     }
 
     @Override
     public List<ItemResponse> getAllItemsAsync() {
-        Map<String, String> copyOfContextMap = MDC.getCopyOfContextMap();
-        CompletableFuture<List<ItemResponse>> fruitItems = CompletableFuture.supplyAsync(() -> {
-            MDC.setContextMap(copyOfContextMap);
-            return getItemsFromFruitSupplier();
-        });
-        CompletableFuture<List<ItemResponse>> vegItems = CompletableFuture.supplyAsync(() -> {
-            MDC.setContextMap(copyOfContextMap);
-            return getItemsFromVegSupplier();
-        });
-        CompletableFuture<List<ItemResponse>> grainItems = CompletableFuture.supplyAsync(() -> {
-            MDC.setContextMap(copyOfContextMap);
-            return getItemsFromGrainSupplier();
-        });
+
+        CompletableFuture<List<ItemResponse>> fruitItems = CompletableFuture.supplyAsync(this::getItemsFromFruitSupplier);
+        CompletableFuture<List<ItemResponse>> vegItems = CompletableFuture.supplyAsync(this::getItemsFromVegSupplier);
+        CompletableFuture<List<ItemResponse>> grainItems = CompletableFuture.supplyAsync(this::getItemsFromGrainSupplier);
 
         List<CompletableFuture<List<ItemResponse>>> apiCallsList = List.of(fruitItems, vegItems, grainItems);
 
+        log.info("Calling suppliers to get items asynchronously");
         CompletableFuture<List<ItemResponse>> itemResponseListCF = CompletableFuture.allOf(apiCallsList.toArray(new CompletableFuture[0]))
                 .thenApply(v -> apiCallsList
                         .stream()
@@ -116,8 +125,10 @@ public class AggregatorServiceImpl implements AggregatorService {
                         .flatMap(Collection::stream)
                         .collect(Collectors.toList()));
 
-        return itemResponseListCF.join();
+        List<ItemResponse> aggregatedItems = itemResponseListCF.join();
+        log.info("Aggregated items from async call to suppliers. Result = {}", aggregatedItems);
 
+        return aggregatedItems;
     }
 
     @Override
@@ -147,13 +158,17 @@ public class AggregatorServiceImpl implements AggregatorService {
     }
 
     private Optional<List<ItemResponse>> checkWithSuppliers(String itemName) {
-        List<ItemResponse> itemResponseList = getAllItemsSync();
-        itemsCache.updateCache(itemResponseList);
+        log.info("Item : '{}' not present in cache. Checking with suppliers", itemName);
 
-        return Optional.of(itemResponseList
+        List<ItemResponse> itemResponseList = getAllItemsSync();
+        List<ItemResponse> filteredItemResponseByName = itemResponseList
                 .stream()
                 .filter(item -> itemName.toLowerCase().equals(item.getName().toLowerCase()))
-                .collect(Collectors.toList()));
+                .collect(Collectors.toList());
+
+        itemsCache.updateCache(itemResponseList, false);
+
+        return Optional.of(filteredItemResponseByName);
     }
 
     private boolean checkPrice(String itemPriceString, String requestPriceString) {
@@ -163,9 +178,8 @@ public class AggregatorServiceImpl implements AggregatorService {
             BigDecimal itemPrice = new BigDecimal(String.valueOf(NumberFormat.getCurrencyInstance(Locale.US).parse(itemPriceString)));
             return requestPrice.compareTo(itemPrice) >= 0;
         } catch (ParseException e) {
-            //todo add logger?
-            System.out.println(e.getMessage());
-            throw new RuntimeException("Parsing of price failed");
+            log.error("Parsing of price failed, ERROR = {}", e.getLocalizedMessage());
+            throw new IllegalStateException("Parsing of price failed", e);
         }
 
     }

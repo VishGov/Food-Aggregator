@@ -8,7 +8,7 @@ import java.util.Optional;
 
 public class Validator {
 
-    List<ValidationRule> validationList;
+    final List<ValidationRule> validationList;
 
     private Validator(List<ValidationRule> validationList) throws InvalidItemRequestException {
         this.validationList = validationList;
@@ -30,7 +30,7 @@ public class Validator {
     }
 
     public static class ValidatorBuilder {
-        private List<ValidationRule> validationList;
+        private final List<ValidationRule> validationList;
 
         ValidatorBuilder() {
             validationList = new ArrayList<>();
@@ -41,8 +41,8 @@ public class Validator {
             return this;
         }
 
-        public Validator validate() {
-            return new Validator(validationList);
+        public void validate() {
+            new Validator(validationList);
         }
 
     }

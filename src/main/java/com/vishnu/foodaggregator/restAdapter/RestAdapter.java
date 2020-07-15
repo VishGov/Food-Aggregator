@@ -1,7 +1,5 @@
 package com.vishnu.foodaggregator.restAdapter;
 
-import org.springframework.stereotype.Component;
-
 import java.util.Optional;
 
 
