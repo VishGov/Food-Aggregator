@@ -1,9 +1,7 @@
 package com.vishnu.foodaggregator.service.impl;
 
-import com.vishnu.foodaggregator.dto.FruitSupplierDTO;
-import com.vishnu.foodaggregator.dto.GrainSupplierDTO;
-import com.vishnu.foodaggregator.dto.VegSupplierDTO;
 import com.vishnu.foodaggregator.exception.ItemNotFoundException;
+import com.vishnu.foodaggregator.mapper.Mapper;
 import com.vishnu.foodaggregator.response.ItemResponse;
 import com.vishnu.foodaggregator.service.AggregatorService;
 import com.vishnu.foodaggregator.service.SupplierService;
@@ -29,6 +27,7 @@ public class AggregatorServiceImpl implements AggregatorService {
 
     private ItemsCache itemsCache;
     private SupplierService supplierService;
+    private Mapper mapper;
 
     @Override
     public List<ItemResponse> getByName(String itemName, boolean makeAsyncCall) throws ItemNotFoundException {
@@ -73,7 +72,7 @@ public class AggregatorServiceImpl implements AggregatorService {
 
         Optional<List<ItemResponse>> itemResponsesFromCacheOrSuppliers = itemsCache.getItemResponses(itemName)
                 .map(cachedItemResponses -> {
-                    log.info("Item : '{}' is present in cache. Corresponding item responses : ITEM_RESPONSES = {}",itemName, cachedItemResponses);
+                    log.info("Item : '{}' is present in cache. Corresponding item responses : ITEM_RESPONSES = {}", itemName, cachedItemResponses);
                     return cachedItemResponses;
                 })
                 .or(() -> checkWithSuppliers(itemName));
@@ -139,21 +138,21 @@ public class AggregatorServiceImpl implements AggregatorService {
     private List<ItemResponse> getItemsFromGrainSupplier() {
         return supplierService.getGrainItems()
                 .stream()
-                .map(this::mapSupplierDTOToItemResponse)
+                .map(item -> mapper.mapSupplierDTOToItemResponse(item))
                 .collect(Collectors.toList());
     }
 
     private List<ItemResponse> getItemsFromFruitSupplier() {
         return supplierService.getFruitItems()
                 .stream()
-                .map(this::mapSupplierDTOToItemResponse)
+                .map(item -> mapper.mapSupplierDTOToItemResponse(item))
                 .collect(Collectors.toList());
     }
 
     private List<ItemResponse> getItemsFromVegSupplier() {
         return supplierService.getVegetableItems()
                 .stream()
-                .map(this::mapSupplierDTOToItemResponse)
+                .map(item -> mapper.mapSupplierDTOToItemResponse(item))
                 .collect(Collectors.toList());
     }
 
@@ -184,30 +183,5 @@ public class AggregatorServiceImpl implements AggregatorService {
 
     }
 
-    private ItemResponse mapSupplierDTOToItemResponse(FruitSupplierDTO item) {
-        return ItemResponse.builder()
-                .id(item.getId())
-                .name(item.getName())
-                .price(item.getPrice())
-                .quantity(item.getQuantity())
-                .build();
-    }
 
-    private ItemResponse mapSupplierDTOToItemResponse(VegSupplierDTO item) {
-        return ItemResponse.builder()
-                .id(item.getProductId())
-                .name(item.getProductName())
-                .price(item.getPrice())
-                .quantity(item.getQuantity())
-                .build();
-    }
-
-    private ItemResponse mapSupplierDTOToItemResponse(GrainSupplierDTO item) {
-        return ItemResponse.builder()
-                .id(item.getItemId())
-                .name(item.getItemName())
-                .price(item.getPrice())
-                .quantity(item.getQuantity())
-                .build();
-    }
 }
