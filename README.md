@@ -1,6 +1,18 @@
 # Food-Aggregator
 Food aggregator that will call external suppliers and aggregate their items data. We will expose endpoints to get items from this data based on certain criterias.
 
+# Highlights
+
+- Spring Boot and Java 11
+- Lombok used to generate code for getter/setter/constructors and for builders
+- Logging AOP to log incoming method calls and log the total method call time (this will be useful to check the time difference between Challenge #1 and Challenge #5)
+  - Also uses MDC so that we can log a REQUEST_ID per request to track logs better
+- Exception Handling using @ControllerAdvice and @ExceptionHandler
+- REST calls made with simple RestTemplate
+- Async behavior achieved with CompletableFuture and RestTemplate
+- Validator class that validates the input parameters (uses Strategy Pattern)
+
+
 # Assumptions
 
 - Challenge #1
