@@ -11,6 +11,7 @@ Food aggregator that will call external suppliers and aggregate their items data
 - REST calls made with simple RestTemplate
 - Async behavior achieved with CompletableFuture and RestTemplate
 - Validator class that validates the input parameters (uses Strategy Pattern)
+- Issue based git check-ins : https://github.com/VishGov/Food-Aggregator/issues?q=is%3Aissue+is%3Aclosed
 
 
 # Assumptions
